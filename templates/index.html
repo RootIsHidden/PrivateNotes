@@ -7,11 +7,16 @@
 {% block content %}
   
   <div class = "container">
-    <h1>Welcome to PrivateNotes Web Application</h1>
+    <h1>PrivateNotes  Web Application</h1>
     {{ wtf.quick_form(form, button_map={'submit_button': 'primary'}) }}
     <p>
-      Obtained_Data: 
-      {{submitted_note}}
-    </p>
+      <ol>
+        {% for note in notesList %}
+        <li>{{ note.text }}</li>
+        {% else %}
+        <li> NULL </li>   
+        {% endfor %}
+      </ol>
+    <p>
   </div>
 {% endblock %}
