@@ -1,6 +1,17 @@
 {% extends "bootstrap/base.html" %}
-{% block title %}This is an example page{% endblock %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+
+{% block title %}PrivateNotes{% endblock %}
 
 {% block content %}
-  <h1>Hello, Bootstrap</h1>
+  
+  <div class = "container">
+    <h1>Welcome to PrivateNotes Web Application</h1>
+    {{ wtf.quick_form(form, button_map={'submit_button': 'primary'}) }}
+    <p>
+      Obtained_Data: 
+      {{submitted_note}}
+    </p>
+  </div>
 {% endblock %}
