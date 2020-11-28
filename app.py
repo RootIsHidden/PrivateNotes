@@ -8,7 +8,7 @@ import os
 import psycopg2
 
 app = Flask(__name__)
-# Configuring KEY using environment variables:
+# Configuring KEYs from env vars:
 app.config['SECRET_KEY'] = 'devkey'
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 db = SQLAlchemy(app)
@@ -23,7 +23,7 @@ class NoteForm(Form):
 # Note class
 class Note(db.Model):
     id   = db.Column(db.Integer, primary_key = True)
-    text = db.Column(db.String(256), unique = True, nullable = False)
+    text = db.Column(db.String(256), unique = False, nullable = False)
     
     # def __init__(self, note)
     #     self.text = note
