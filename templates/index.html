@@ -1,13 +1,16 @@
 {% extends "bootstrap/base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
+{% block head %}
+  {{super()}}
+  <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/proxy/xQJqOW4O0c-5tx0UOeOgkiL6FHIir7jSXn7wzSy127FB27xatWJlEHCzLX8Qkl7OksRN2bz_JCByjL6T2MBi8pdMJvgvZsOmLREDusEUEbDjPQ">
+{% endblock %}
 
 {% block title %}PrivateNotes{% endblock %}
 
-{% block content %}
-  
+{% block content %}  
   <div class = "container">
-    <h1>PrivateNotes  Web Application</h1>
+    <h1>PrivateNotes  Web /teApplication</h1>
     {{ wtf.quick_form(form, button_map={'submit_button': 'primary'}) }}
     <p>
       <ol>
