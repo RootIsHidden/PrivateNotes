@@ -1,4 +1,11 @@
 {% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "wtf2.html" as wtf2 %}
+
+{% block styles %}
+    {{ super() }}
+    <link href="{{url_for('static', filename='base.css')}}" rel="stylesheet">
+{% endblock %}
 
 {% block navbar %}
     <nav class="navbar navbar-default">
@@ -20,9 +27,9 @@
           </ul>
           <ul class="nav navbar-nav navbar-right">
               {% if current_user.is_authenticated %}
-              <a type="button" class="btn btn-default navbar-btn" href={{url_for("security.logout")}}>Sign out</a>
+              <a type="button" class="btn btn-default navbar-btn" href={{url_for("security.logout")}}>Log out</a>
               {% else %}
-                  <a type="button" class="btn btn-success navbar-btn" href={{url_for("security.login")}}>Sign in</a>
+                  <a type="button" class="btn btn-success navbar-btn" href={{url_for("security.login")}}>Log in</a>
                   <a type="button" class="btn btn-success navbar-btn" href={{url_for("security.register")}}>Register</a>
               {% endif %}
           </ul>

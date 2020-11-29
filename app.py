@@ -4,9 +4,10 @@
 # Nikolai Korolkov, University of Central Florida, December 2020.
 # ---------------------------------------------------------------------------------------------------------------
 # NOTE:
-# The source code is partially based on Alexander Putilin's youTube series and implementation.
-# Thank you, Alexander, for providing me with opportunity to learn from you!
-# The author granted me a written permission to rely on his videos and implementation for educational purposes.
+# The source code is partially based on Alexander Putilin's youTube series and implementation, which was released
+# under MIT licence (permissive). Thank you, Alexander, for providing me with opportunity to learn from you! UI 
+# files came fron open-sources under permissive licenses as well. Alexander Putilin granted me a written
+# permission to rely on his videos and implementation for educational purposes.
 # ===============================================================================================================
 
 from flask import Flask, render_template, flash
@@ -18,6 +19,7 @@ from wtforms.validators import DataRequired
 from flask_security import Security, SQLAlchemyUserDatastore, login_required, UserMixin, RoleMixin
 import os
 import psycopg2
+import wtf_helpers
 
 app = Flask(__name__)
 # Configuring KEYs from env vars:
@@ -76,6 +78,7 @@ user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(app, user_datastore)
 db.create_all()
 Bootstrap(app)
+wtf_helpers.add_helpers(app)
 
 # Default page:
 @app.route('/', methods = ['GET', 'POST'])
