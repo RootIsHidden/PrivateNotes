@@ -83,7 +83,6 @@ wtf_helpers.add_helpers(app)
 # Default page:
 @app.route('/', methods = ['GET', 'POST'])
 def index():
-    flash(u'DEBUG MESSAGE', 'error')
     form = NoteForm()
     if form.validate_on_submit():
         # Setting up DB object:
