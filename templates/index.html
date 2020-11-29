@@ -1,4 +1,4 @@
-{% extends "bootstrap/base.html" %}
+{% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
 {% block head %}
@@ -8,16 +8,17 @@
 
 {% block title %}PrivateNotes{% endblock %}
 
-{% block content %}  
+{% block content %}
+{{super()}}  
   <div class = "container">
-    <h1>PrivateNotes  Web Application</h1>
+    <h1>Type a Private Note Below:</h1>
     {{ wtf.quick_form(form, button_map={'submit_button': 'primary'}) }}
     <p>
       <ol>
         {% for note in notesList %}
         <li>{{ note.text }}</li>
         {% else %}
-        <li> NULL </li>   
+        <li> Empty </li>   
         {% endfor %}
       </ol>
     <p>
