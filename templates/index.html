@@ -7,16 +7,29 @@
   <link rel="icon" type="image" href="images/icon.jpg">
 {% endblock %}
 
+
 {% block content %}
 {{super()}}  
   <div class = "container">
-    <p>Registered Emails:</p>
-    <ul>
-    {% for user in users %}
-    <li> <a href={{url_for("notes", user_email=user.email)}}>{{user.email}}</a></li>
-    {% else %}
-      <p>No Users</p>
-    {% endfor %}
-    </ul>
+    <div class="panel-heading">
+      <table class="table table-striped">
+        <thead>
+            <tr>
+                <th> #</th>
+                <th> Email</th>
+            </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+              <tr>
+                <td>{{loop.index}}</td>
+                <td>              
+                  <a href={{url_for("notes", user_email=user.email)}}><span class="glyphicon glyphicon-user"></span>{{user.email}}</a>
+                </td>
+              </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 {% endblock %}

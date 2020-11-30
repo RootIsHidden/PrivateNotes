@@ -10,14 +10,14 @@
 # permission to rely on his videos and implementation for educational purposes.
 # ===============================================================================================================
 
-from flask import Flask, render_template, flash, abort
+from flask import Flask, render_template, flash, abort, redirect, request, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_bootstrap import Bootstrap
 from flask_wtf import Form
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
 from flask_security import Security, SQLAlchemyUserDatastore, login_required, UserMixin, RoleMixin
-from flask_login import current_user
+from flask_login import current_user, login_required
 from datetime import datetime
 import os
 import psycopg2
@@ -29,10 +29,11 @@ app.config['SECRET_KEY'] = 'devkey'
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 # flask_security configurations:
 app.config['SECURITY_REGISTERABLE'] = True
+app.config['SECURITY_CHANGEABLE'] = True
+app.config['SECURITY_FLASH_MESSAGES'] = True
 app.config['SECURITY_SEND_REGISTER_EMAIL'] = False
 app.config['SECURITY_SEND_PASSWORD_CHANGE_EMAIL'] = False
 app.config['SECURITY_SEND_PASSWORD_RESET_NOTICE_EMAIL'] = False
-app.config['SECURITY_FLASH_MESSAGES'] = True
 # To be changed in Production server!!!!!! :)
 app.config['SECURITY_PASSWORD_SALT'] = 'sJ$_MeLa$G9*KVe43@xV'
 # Creating a DB instance
@@ -60,14 +61,25 @@ class Role(db.Model, RoleMixin):
 
 # Form class
 class NoteForm(Form):
+    # Note's category:
+    category_str_field  = StringField('Category (Optional)')
     # Note's title:
     title_str_field     = StringField('Title', validators=[DataRequired()])
-    # Note's category:
-    category_str_field  = StringField('Category')
     # Note's content:
     str_field           = StringField('Note', validators=[DataRequired()])
     # Add note button:
     submit_Button = SubmitField('Add Note')
+
+# Edit-Form class
+class EditNoteForm(Form):
+    # Note's category:
+    category_str_field  = StringField('Category')
+    # Note's title:
+    title_str_field     = StringField('Title', validators=[DataRequired()])
+    # Note's content:
+    str_field           = StringField('Note', validators=[DataRequired()])
+    # Add note button:
+    submit_Button = SubmitField('Edit Note')
 
 # Note class
 class Note(db.Model):
@@ -76,7 +88,7 @@ class Note(db.Model):
     date       = db.Column(db.String(128), unique = False, nullable = False)
     title      = db.Column(db.String(256), unique = False, nullable = False)
     category   = db.Column(db.String(256), unique = False, nullable = False)
-    text       = db.Column(db.String(512), unique = False, nullable = False)
+    text       = db.Column(db.String(2048), unique = False, nullable = False)
 
     # Modyfying the constructor:
     def __init__(self, note, user):
@@ -88,17 +100,17 @@ class Note(db.Model):
 
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(app, user_datastore)
-
 db.create_all()
 Bootstrap(app)
 wtf_helpers.add_helpers(app)
 
-@app.route('/')
+# Default page
+@app.route("/")
 def index():
     users = User.query
-    return render_template('index.html', users=users)
+    return render_template("index.html", users=users)
 
-# Default page:
+# User's directory page:
 @app.route('/notes/<user_email>/<sorting_mode>', methods = ['GET', 'POST'])
 @app.route('/notes/<user_email>', defaults={'sorting_mode' : 'Date'}, methods = ['GET', 'POST'])
 def notes(user_email, sorting_mode):
@@ -125,9 +137,14 @@ def notes(user_email, sorting_mode):
         else:
             note.category = '-'
 
+        form.category_str_field.data = ""
+        form.title_str_field.data = ""
+        form.str_field.data = ""
+
         # Adding a Note to DB:
         db.session.add(note)
         db.session.commit()
+        flash("The Private Note was added.", "success")
     
     # Sorting:
     if sorting_mode == 'Date':
@@ -140,6 +157,45 @@ def notes(user_email, sorting_mode):
         abort(403)
 
     return render_template('notes.html', form = form, notesList = notesList, user_email=user_email, sorting_mode = sorting_mode)
+
+@app.route("/edit_note/<note_id>", methods=["GET", "POST"])
+@login_required
+def edit_note(note_id):
+    note = Note.query.get_or_404(note_id)
+
+    if note.user_id != current_user.id:
+        abort(403)
+
+    form = EditNoteForm()
+
+    if request.method == 'GET':
+        form.category_str_field.data = note.category
+        form.title_str_field.data    = note.title
+        form.str_field.data          = note.text
+
+    if form.validate_on_submit():
+        note.category = form.category_str_field.data
+        note.title    = form.title_str_field.data
+        note.text     = form.str_field.data
+        note.date     = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+        db.session.commit()
+        flash("The Private Note was edited.", "success")
+        return redirect(url_for('notes', user_email=current_user.email, sorting_mode='Date'))
+
+    return render_template('edit_note.html', form = form)
+
+@app.route("/delete_note/<note_id>", methods=["GET", "POST"])
+@login_required
+def delete_note(note_id):
+    note = Note.query.get_or_404(note_id)
+
+    if note.user_id != current_user.id:
+        abort(403)
+
+    db.session.delete(note)
+    db.session.commit()
+    flash("The Private Note was deleted.", "success")
+    return redirect(url_for('notes', user_email=current_user.email, sorting_mode='Date'))
 
 if __name__ == '__main__':
     app.run(debug = True)

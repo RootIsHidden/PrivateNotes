@@ -3,42 +3,54 @@
 {% block title %}User Directory{% endblock %}
 
 {% block content %}
+{{super()}}
   <div class="container">
-    {% if form %} 
-        <p><h1>Follow the format (Title, Category, Content):</h1></p>
-        <br>
-        <p>{{ wtf.quick_form(form, form_type='inline', button_map={'submit_button': 'primary'}) }}</p>
-    {% else %} 
-        <h1>Directory for {{user_email}}:</h1>
-    {% endif %}
-    
+    <div class="panel panel-default">  
+      <div class="panel-heading">
+      <p><h1>Adding new Private Note:</h1></p> 
+        {% if form %}
+          <br>
+          <p>{{ wtf.quick_form(form, form_type='vertical', button_map={'submit_button': 'primary'}) }}</p>
+        {% endif %}
+      </div>
+    </div>
+
     <br>
     <p>
-        
     
-  
       <div class="panel panel-default">
           <div class="panel-heading">     
-          {% if current_user.email == user_email and notesList.count() %}
-            <div class="btn-group" role="group">
+            {% if current_user.email == user_email and notesList.count() %}
+              <div class="btn-group" role="group">
                 <a href={{url_for('notes', user_email=user_email, sorting_mode = 'Date')}} class="btn {% if sorting_mode == 'Date' %} btn-primary {% endif %}">Date</a>
                 <a href={{url_for('notes', user_email=user_email, sorting_mode = 'Title')}} class="btn {% if sorting_mode == 'Title' %} btn-primary {% endif %}">Title</a>
                 <a href={{url_for('notes', user_email=user_email, sorting_mode = 'Category')}} class="btn {% if sorting_mode == 'Category' %} btn-primary {% endif %}">Category</a>
-            </div>
+              </div>
           </div> 
               <table class="table table-striped">
                   <thead>
                       <tr>
-                          <th> ID</th>
                           <th> Date</th>
-                          <th> Title</th>
                           <th> Category</th>
-                          <th> Text</th>
+                          <th> Title</th>
+                          <th> Note</th>
                       </tr>
                   </thead>
                   <tbody>
                     {% for note in notesList %}
-                        <tr><td>{{note.id}}</td><td>{{note.date}}</td><td>{{note.title}}</td><td>{{note.category}}</td><td>{{note.text}}</td></tr>
+                        <tr>
+                          <td>{{note.date}}</td>
+                          <td>{{note.category}}</td>
+                          <td>{{note.title}}</td>
+                          <td>
+                            <a href={{url_for('delete_note', note_id=note.id)}}>
+                            <span class="glyphicon glyphicon-floppy-remove"></span></a>
+                            <a href={{url_for('edit_note', note_id=note.id)}}>
+                            <span class="glyphicon glyphicon-edit"></span></a>
+                            {{note.text}}
+                          </td>
+                        
+                        </tr>
                     {% endfor %}
                   </tbody>
               </table>

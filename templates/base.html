@@ -30,11 +30,11 @@
           </ul>
           <ul class="nav navbar-nav navbar-right">
               {% if current_user.is_authenticated %}
-              <a type="button" class="btn btn-default navbar-btn" href={{url_for("security.logout")}}>Log Out</a>
-              <a type="button" class="btn btn-default navbar-btn" href={{url_for("security.logout")}}>Reset Password</a>
+              <a type="button" class="btn btn-default navbar-btn" href={{url_for('security.logout')}}>Log Out</a>
+              <a type="button" class="btn btn-default navbar-btn" href={{url_for('security.change_password')}}>Change Password</a>
               {% else %}
-                  <a type="button" class="btn btn-success navbar-btn" href={{url_for("security.login")}}>Log In</a>
-                  <a type="button" class="btn btn-success navbar-btn" href={{url_for("security.register")}}>Register</a>
+                  <a type="button" class="btn btn-success navbar-btn" href={{url_for('security.login')}}>Log In</a>
+                  <a type="button" class="btn btn-success navbar-btn" href={{url_for('security.register')}}>Register</a>
               {% endif %}
           </ul>
         </div><!-- /.navbar-collapse -->
@@ -43,16 +43,23 @@
 {% endblock %}
 
 {% block content %}
-<div class="container"> 
-    {% with messages = get_flashed_messages() %}
+  <div class="container"> 
+    {% with messages = get_flashed_messages(with_categories=True) %}
       {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-info alert-dismissible" role="alert">
-              <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-              {{ message }}
-            </div>
+        {% for category, message in messages %}
+          {% if category == "success" %}
+            {% set bootstrap_class = "alert-success" %}
+          {% elif category == "error" %}
+            {% set bootstrap_class = "alert-error" %}
+          {% else %}
+            {% set bootstrap_class = "alert-info" %}
+          {% endif %}
+          <div class="alert {{bootstrap_class}} alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            {{ message }}
+          </div>
         {% endfor %}
       {% endif %}
     {% endwith %}
-</div>
+  </div>
 {% endblock %}

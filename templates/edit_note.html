@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+
+{% block title %} Editing Note {% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            {{super()}}
+            <p><h1>Editing the Private Note:</h1></p>
+            {{ wtf.quick_form(form, form_type='vertical', button_map={'submit_button': 'primary'}) }}
+        </div>
+    </div> 
+</div>
+
+{% endblock %}
