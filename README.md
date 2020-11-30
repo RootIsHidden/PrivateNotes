@@ -1,2 +1,2 @@
 # PrivateNotes
-PrivateNotes is a Web-Application that allows users to privately store, retrieve, and access personal notes.
+PrivateNotes is a Web-Application that allows users to privately store, modify, and access personal notes.
