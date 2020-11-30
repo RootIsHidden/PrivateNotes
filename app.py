@@ -129,6 +129,7 @@ def notes(user_email, sorting_mode):
         db.session.add(note)
         db.session.commit()
     
+    # Sorting:
     if sorting_mode == 'Date':
         notesList = user.notes.order_by(Note.date)
     elif sorting_mode == 'Title':
