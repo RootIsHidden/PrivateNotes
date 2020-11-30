@@ -4,7 +4,7 @@
 
 {% block styles %}
     {{ super() }}
-    <link href="{{url_for('static', filename='base.css')}}" rel="stylesheet">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
 {% endblock %}
 
 {% block navbar %}
@@ -18,18 +18,22 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="#">PrivateNotes</a>
+          <a class="navbar-brand" href="{{url_for('index')}}"> PrivateNotes</a>
         </div>
 
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
           <ul class="nav navbar-nav">
+            {% if current_user.is_authenticated %}
+              <li><a href={{url_for("notes", user_email=current_user.email) }}>{{current_user.email}}</a></li>
+            {% endif %}    
           </ul>
           <ul class="nav navbar-nav navbar-right">
               {% if current_user.is_authenticated %}
-              <a type="button" class="btn btn-default navbar-btn" href={{url_for("security.logout")}}>Log out</a>
+              <a type="button" class="btn btn-default navbar-btn" href={{url_for("security.logout")}}>Log Out</a>
+              <a type="button" class="btn btn-default navbar-btn" href={{url_for("security.logout")}}>Reset Password</a>
               {% else %}
-                  <a type="button" class="btn btn-success navbar-btn" href={{url_for("security.login")}}>Log in</a>
+                  <a type="button" class="btn btn-success navbar-btn" href={{url_for("security.login")}}>Log In</a>
                   <a type="button" class="btn btn-success navbar-btn" href={{url_for("security.register")}}>Register</a>
               {% endif %}
           </ul>

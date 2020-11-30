@@ -10,13 +10,14 @@
 # permission to rely on his videos and implementation for educational purposes.
 # ===============================================================================================================
 
-from flask import Flask, render_template, flash
+from flask import Flask, render_template, flash, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_bootstrap import Bootstrap
 from flask_wtf import Form
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
 from flask_security import Security, SQLAlchemyUserDatastore, login_required, UserMixin, RoleMixin
+from flask_login import current_user
 import os
 import psycopg2
 import wtf_helpers
@@ -33,13 +34,11 @@ app.config['SECURITY_SEND_PASSWORD_RESET_NOTICE_EMAIL'] = False
 app.config['SECURITY_FLASH_MESSAGES'] = True
 # To be changed in Production server!!!!!! :)
 app.config['SECURITY_PASSWORD_SALT'] = 'sJ$_MeLa$G9*KVe43@xV'
-
 # Creating a DB instance
 db = SQLAlchemy(app)
-
 # Creating a new table for implementing roles
-roles_users = db.Table('roles_users', db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
-    db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))
+roles_users = db.Table('roles_users', db.Column('user_id', db.Integer(), db.ForeignKey('user.id')), \
+                db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))
 
 # User class
 class User(db.Model, UserMixin):
@@ -49,23 +48,14 @@ class User(db.Model, UserMixin):
     active = db.Column(db.Boolean())
     confirmed_at = db.Column(db.DateTime())
     roles = db.relationship('Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic'))
+    # Adding note-user relationship:
+    notes = db.relationship('Note', backref='user', lazy='dynamic')
 
 # Role class used for access-control:
 class Role(db.Model, RoleMixin):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True)
     description = db.Column(db.String(255))
-
-# Note class
-class Note(db.Model):
-    id   = db.Column(db.Integer, primary_key = True)
-    text = db.Column(db.String(256), unique = False, nullable = False)
-    
-    def __init__(self, note):
-        self.text = note
-    
-    def __repr__(self):
-        return '<Note %r>' % self.id
 
 # Form class
 class NoteForm(Form):
@@ -74,26 +64,53 @@ class NoteForm(Form):
     # Add note button:
     submit_Button = SubmitField('Add Note')
 
+# Note class
+class Note(db.Model):
+    id      = db.Column(db.Integer, primary_key = True)
+    text    = db.Column(db.String(256), unique = False, nullable = False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    
+    # Modyfying the constructor:
+    def __init__(self, note, user):
+        self.text    = note
+        self.user_id = user.id
+    
+    def __repr__(self):
+        return '<Note %r>' % self.id
+
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(app, user_datastore)
+
 db.create_all()
 Bootstrap(app)
 wtf_helpers.add_helpers(app)
 
-# Default page:
-@app.route('/', methods = ['GET', 'POST'])
+@app.route('/')
 def index():
-    form = NoteForm()
-    if form.validate_on_submit():
-        # Setting up DB object:
-        note = Note(form.str_field.data)
+    users = User.query
+    return render_template('index.html', users=users)
+
+# Default page:
+@app.route('/notes/<user_email>', methods = ['GET', 'POST'])
+def notes(user_email):
+    user = User.query.filter_by(email=user_email).first_or_404()
+
+    # Checking whether user is logged in: 
+    if user == current_user:
+        form = NoteForm()
+    else:
+        form = None
+
+    if form and form.validate_on_submit():
+        # Setting up DB object having a user refference:
+        note = Note(form.str_field.data, user)
         # Adding a Note to DB:
         db.session.add(note)
         db.session.commit()
     
-    notesList = Note.query
+    notesList = user.notes
 
-    return render_template('index.html', form = form, notesList = notesList)
+    return render_template('notes.html', form = form, notesList = notesList, user_email=user_email)
 
 if __name__ == '__main__':
     app.run(debug = True)

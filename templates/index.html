@@ -1,26 +1,22 @@
 {% extends "base.html" %}
-{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}Private Notes{% endblock %}
 
 {% block head %}
   {{super()}}
-  <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/proxy/xQJqOW4O0c-5tx0UOeOgkiL6FHIir7jSXn7wzSy127FB27xatWJlEHCzLX8Qkl7OksRN2bz_JCByjL6T2MBi8pdMJvgvZsOmLREDusEUEbDjPQ">
+  <link rel="icon" type="image" href="images/icon.jpg">
 {% endblock %}
-
-{% block title %}PrivateNotes{% endblock %}
 
 {% block content %}
 {{super()}}  
   <div class = "container">
-    <h1>Type a Private Note Below:</h1>
-    {{ wtf.quick_form(form, button_map={'submit_button': 'primary'}) }}
-    <p>
-      <ol>
-        {% for note in notesList %}
-        <li>{{ note.text }}</li>
-        {% else %}
-        <li> Empty </li>   
-        {% endfor %}
-      </ol>
-    <p>
+    <p>Registered Emails:</p>
+    <ul>
+    {% for user in users %}
+    <li> <a href={{url_for("notes", user_email=user.email)}}>{{user.email}}</a></li>
+    {% else %}
+      <p>No Users</p>
+    {% endfor %}
+    </ul>
   </div>
 {% endblock %}
