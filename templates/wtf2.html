@@ -6,6 +6,7 @@
 {%- macro horizontal_field(field, label_width=2, field_width=3) %}
 <div class="form-group {% if field.errors %}has-error{% endif %}">
     {{field.label(class="control-label col-lg-" ~ label_width)}}
+    
     <div class="col-lg-{{field_width}}">
         {%- if field|is_boolean_field %}
         <div class="checkbox">

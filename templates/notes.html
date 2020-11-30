@@ -1,23 +1,51 @@
 {% extends "base.html" %}
 
-{% block title %}User Directory{{user}} {% endblock %}
+{% block title %}User Directory{% endblock %}
 
 {% block content %}
   <div class="container">
     {% if form %} 
-        <h1>Type Your Private Note:</h1>
-        {{ wtf.quick_form(form, button_map={'submit_button': 'primary'}) }}
+        <p><h1>Follow the format (Title, Category, Content):</h1></p>
+        <br>
+        <p>{{ wtf.quick_form(form, form_type='inline', button_map={'submit_button': 'primary'}) }}</p>
     {% else %} 
         <h1>Directory for {{user_email}}:</h1>
     {% endif %}
+    
+    <br>
     <p>
-        <ol>
-          {% for note in notesList %}
-          <li>{{note.text}}</ li>
+        
+    
+  
+      <div class="panel panel-default">
+          <div class="panel-heading">     
+          {% if current_user.email == user_email and notesList.count() %}
+            <div class="btn-group" role="group">
+                <a href={{url_for('notes', user_email=user_email, sorting_mode = 'Date')}} class="btn {% if sorting_mode == 'Date' %} btn-primary {% endif %}">Date</a>
+                <a href={{url_for('notes', user_email=user_email, sorting_mode = 'Title')}} class="btn {% if sorting_mode == 'Title' %} btn-primary {% endif %}">Title</a>
+                <a href={{url_for('notes', user_email=user_email, sorting_mode = 'Category')}} class="btn {% if sorting_mode == 'Category' %} btn-primary {% endif %}">Category</a>
+            </div>
+          </div> 
+              <table class="table table-striped">
+                  <thead>
+                      <tr>
+                          <th> ID</th>
+                          <th> Date</th>
+                          <th> Title</th>
+                          <th> Category</th>
+                          <th> Text</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                    {% for note in notesList %}
+                        <tr><td>{{note.id}}</td><td>{{note.date}}</td><td>{{note.title}}</td><td>{{note.category}}</td><td>{{note.text}}</td></tr>
+                    {% endfor %}
+                  </tbody>
+              </table>
           {% else %}
-          <li> Notes are missing. </li>   
-          {% endfor %}
-        </ol>
-    <p>
+            <p><p>{{user_email}} does not store any notes.</p></p>
+          {% endif %}
+      </div>
+    </p>
   </div>
-{% endblock %}
+{% endblock %}    
