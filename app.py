@@ -3,11 +3,11 @@
 # ---------------------------------------------------------------------------------------------------------------
 # Nikolai Korolkov, University of Central Florida, December 2020.
 # ---------------------------------------------------------------------------------------------------------------
-# NOTE:
+# DISCLAIMER:
 # The source code is partially based on Alexander Putilin's youTube series and implementation, which was released
-# under MIT licence (permissive). Thank you, Alexander, for providing me with opportunity to learn from you! UI 
-# files came fron open-sources under permissive licenses as well. Alexander Putilin granted me a written
-# permission to rely on his videos and implementation for educational purposes.
+# under MIT licence (permissive). Thank you, Alexander, for providing me with opportunity to learn from you! 
+# Everything came from myself or open-sources under permissive licenses like MIT.
+# Matrix Script source:  https://webstudio.pw/html/87-delaem-fon-matricey-html.html
 # ===============================================================================================================
 
 from flask import Flask, render_template, flash, abort, redirect, request, url_for
@@ -19,9 +19,7 @@ from wtforms.validators import DataRequired
 from flask_security import Security, SQLAlchemyUserDatastore, login_required, UserMixin, RoleMixin
 from flask_login import current_user, login_required
 from datetime import datetime
-import os
-import psycopg2
-import wtf_helpers
+import os, psycopg2, wtf_helpers
 
 app = Flask(__name__)
 # Configuring KEYs from env vars:
@@ -29,8 +27,19 @@ app.config['SECRET_KEY'] = 'devkey'
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 # flask_security configurations:
 app.config['SECURITY_REGISTERABLE'] = True
+app.config['SECURITY_PASSWORD_LENGTH_MIN'] = 12
+app.config['SECURITY_PASSWORD_COMPLEXITY_CHECKER'] = 'zxcvbn'
+app.config['SECURITY_CSRF_COOKIE_REFRESH_EACH_REQUEST'] = 1200
+
 app.config['SECURITY_CHANGEABLE'] = True
+# 403 by default
+app.config['SECURITY_UNAUTHORIZED_VIEW'] = None
 app.config['SECURITY_FLASH_MESSAGES'] = True
+app.config['SECURITY_POST_LOGIN_VIEW'] =    '/who'
+app.config['SECURITY_POST_REGISTER_VIEW'] = '/who'
+app.config['SECURITY_POST_CHANGE_VIEW'] = '/who'
+
+app.config['SECURITY_DEFAULT_REMEMBER_ME'] = False
 app.config['SECURITY_SEND_REGISTER_EMAIL'] = False
 app.config['SECURITY_SEND_PASSWORD_CHANGE_EMAIL'] = False
 app.config['SECURITY_SEND_PASSWORD_RESET_NOTICE_EMAIL'] = False
@@ -79,7 +88,7 @@ class EditNoteForm(Form):
     # Note's content:
     str_field           = StringField('Note', validators=[DataRequired()])
     # Add note button:
-    submit_Button = SubmitField('Edit Note')
+    submit_button = SubmitField('Edit Note')
 
 # Note class
 class Note(db.Model):
@@ -110,6 +119,16 @@ def index():
     users = User.query
     return render_template("index.html", users=users)
 
+
+@app.route('/who')
+@login_required
+def who():
+    if current_user.is_authenticated:
+        flash("Succesfully redirected.", "success")
+        return redirect(url_for('notes', user_email=current_user.email, sorting_mode='Date'))
+    else:
+        abort(403)
+    
 # User's directory page:
 @app.route('/notes/<user_email>/<sorting_mode>', methods = ['GET', 'POST'])
 @app.route('/notes/<user_email>', defaults={'sorting_mode' : 'Date'}, methods = ['GET', 'POST'])
