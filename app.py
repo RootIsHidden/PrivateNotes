@@ -1,50 +1,58 @@
 # ===============================================================================================================
-# Private Notes Web Application
+# Private Notes Web Application (v. 1.0)
 # ---------------------------------------------------------------------------------------------------------------
-# Nikolai Korolkov, University of Central Florida, December 2020.
+# Developed by Nikolai Korolkov, University of Central Florida, December 2020
 # ---------------------------------------------------------------------------------------------------------------
-# DISCLAIMER:
-# The source code is partially based on Alexander Putilin's youTube series and implementation, which was released
-# under MIT licence (permissive). Thank you, Alexander, for providing me with opportunity to learn from you! 
-# Everything came from myself or open-sources under permissive licenses like MIT.
-# Matrix Script source:  https://webstudio.pw/html/87-delaem-fon-matricey-html.html
+# Please, read 'license.txt' for additional detaiils
 # ===============================================================================================================
 
 from flask import Flask, render_template, flash, abort, redirect, request, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_bootstrap import Bootstrap
-from flask_wtf import Form
+from flask_wtf import FlaskForm
+from flask_wtf.csrf import CSRFProtect
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
-from flask_security import Security, SQLAlchemyUserDatastore, login_required, UserMixin, RoleMixin
+from flask_security import Security, SQLAlchemyUserDatastore, login_required, auth_required, UserMixin, RoleMixin
 from flask_login import current_user, login_required
 from datetime import datetime
-import os, psycopg2, wtf_helpers
+import os, psycopg2, wtf_helpers, zxcvbn
 
 app = Flask(__name__)
-# Configuring KEYs from env vars:
-app.config['SECRET_KEY'] = 'devkey'
+# Configuring secret data from environment vars (added to git ignore):
+app.config['SECRET_KEY']              = os.environ['SECRET_KEY']
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
+app.config['SECURITY_PASSWORD_SALT']  = os.environ['PASSWORD_SALT']
 # flask_security configurations:
-app.config['SECURITY_REGISTERABLE'] = True
-app.config['SECURITY_PASSWORD_LENGTH_MIN'] = 12
-app.config['SECURITY_PASSWORD_COMPLEXITY_CHECKER'] = 'zxcvbn'
-app.config['SECURITY_CSRF_COOKIE_REFRESH_EACH_REQUEST'] = 1200
+app.config['SECURITY_PASSWORD_COMPLEXITY_CHECKER'] = zxcvbn
+app.config['SECURITY_PASSWORD_LENGTH_MIN'] = 15
+app.config['PREFERRED_URL_SCHEME'] = 'https'
 
+# Have cookie sent
+app.config['SECURITY_CSRF_COOKIE'] = {'key': 'XSRF-TOKEN'}
+# Don't have csrf tokens expire (they are invalid after logout)
+app.config['WTF_CSRF_TIME_LIMIT'] = None
+# You can't get the cookie until you are logged in.
+app.config['WTF_CSRF_CHECK_DEFAULT'] = False
+app.config['SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS'] = True
+# Enable CSRF protection
+CSRFProtect(app)
+
+app.config['SECURITY_REGISTERABLE'] = True
 app.config['SECURITY_CHANGEABLE'] = True
-# 403 by default
-app.config['SECURITY_UNAUTHORIZED_VIEW'] = None
-app.config['SECURITY_FLASH_MESSAGES'] = True
 app.config['SECURITY_POST_LOGIN_VIEW'] =    '/who'
 app.config['SECURITY_POST_REGISTER_VIEW'] = '/who'
-app.config['SECURITY_POST_CHANGE_VIEW'] = '/who'
+app.config['SECURITY_POST_CHANGE_VIEW'] =   '/who'
 
+app.config['SECURITY_FLASH_MESSAGES'] = True
 app.config['SECURITY_DEFAULT_REMEMBER_ME'] = False
 app.config['SECURITY_SEND_REGISTER_EMAIL'] = False
 app.config['SECURITY_SEND_PASSWORD_CHANGE_EMAIL'] = False
 app.config['SECURITY_SEND_PASSWORD_RESET_NOTICE_EMAIL'] = False
-# To be changed in Production server!!!!!! :)
-app.config['SECURITY_PASSWORD_SALT'] = 'sJ$_MeLa$G9*KVe43@xV'
+# DB connection checker:
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
 # Creating a DB instance
 db = SQLAlchemy(app)
 # Creating a new table for implementing roles
@@ -68,8 +76,8 @@ class Role(db.Model, RoleMixin):
     name = db.Column(db.String(80), unique=True)
     description = db.Column(db.String(255))
 
-# Form class
-class NoteForm(Form):
+# FlaskForm class
+class NoteForm(FlaskForm):
     # Note's category:
     category_str_field  = StringField('Category (Optional)')
     # Note's title:
@@ -79,8 +87,8 @@ class NoteForm(Form):
     # Add note button:
     submit_Button = SubmitField('Add Note')
 
-# Edit-Form class
-class EditNoteForm(Form):
+# Edit-FlaskForm class
+class EditNoteForm(FlaskForm):
     # Note's category:
     category_str_field  = StringField('Category')
     # Note's title:
@@ -121,7 +129,7 @@ def index():
 
 
 @app.route('/who')
-@login_required
+@auth_required('token', 'session')
 def who():
     if current_user.is_authenticated:
         flash("Succesfully redirected.", "success")
@@ -132,6 +140,7 @@ def who():
 # User's directory page:
 @app.route('/notes/<user_email>/<sorting_mode>', methods = ['GET', 'POST'])
 @app.route('/notes/<user_email>', defaults={'sorting_mode' : 'Date'}, methods = ['GET', 'POST'])
+@auth_required('token', 'session')
 def notes(user_email, sorting_mode):
     user = User.query.filter_by(email=user_email).first_or_404()
 
@@ -178,7 +187,7 @@ def notes(user_email, sorting_mode):
     return render_template('notes.html', form = form, notesList = notesList, user_email=user_email, sorting_mode = sorting_mode)
 
 @app.route("/edit_note/<note_id>", methods=["GET", "POST"])
-@login_required
+@auth_required('token', 'session')
 def edit_note(note_id):
     note = Note.query.get_or_404(note_id)
 
@@ -204,7 +213,7 @@ def edit_note(note_id):
     return render_template('edit_note.html', form = form)
 
 @app.route("/delete_note/<note_id>", methods=["GET", "POST"])
-@login_required
+@auth_required('token', 'session')
 def delete_note(note_id):
     note = Note.query.get_or_404(note_id)
 
@@ -217,4 +226,4 @@ def delete_note(note_id):
     return redirect(url_for('notes', user_email=current_user.email, sorting_mode='Date'))
 
 if __name__ == '__main__':
-    app.run(debug = True)
+    app.run()
